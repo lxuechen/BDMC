@@ -10,7 +10,7 @@ from vae import VAE
 from hparams import get_default_hparams
 
 
-def bdmc(model, loader, loader_, forward_schedule=np.linspace(0., 1., 500)):
+def bdmc(model, loader, loader_, forward_schedule=np.linspace(0., 1., 500), n_sample=100):
     """Bidirectional Monte Carlo. Integrate forward and back AIS.
     The backward schedule is the reverse of the forward.
 
@@ -26,11 +26,11 @@ def bdmc(model, loader, loader_, forward_schedule=np.linspace(0., 1., 500)):
     """
 
     # forward chain
-    forward_logws = ais_trajectory(model, loader, mode='forward', schedule=forward_schedule)
+    forward_logws = ais_trajectory(model, loader, mode='forward', schedule=forward_schedule, n_sample=n_sample)
 
     # backward chain
     backward_schedule = np.flip(forward_schedule, axis=0)
-    backward_logws = ais_trajectory(model, loader_, mode='backward', schedule=backward_schedule)
+    backward_logws = ais_trajectory(model, loader_, mode='backward', schedule=backward_schedule, n_sample=n_sample)
 
     upper_bounds = []
     lower_bounds = []
@@ -57,7 +57,7 @@ def main(f='checkpoints/model.pth'):
 
     loader = simulate_data(model, batch_size=100, n_batch=1)
     loader_ = simulate_data(model, batch_size=100, n_batch=1)
-    bdmc(model, loader, loader_)
+    bdmc(model, loader, loader_, forward_schedule=np.linspace(0., 1., 500), n_sample=100)
 
 
 if __name__ == '__main__':
