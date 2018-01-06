@@ -31,9 +31,9 @@ def ais_trajectory(model, loader, mode='forward', schedule=np.linspace(0., 1., 5
     assert mode == 'forward' or mode == 'backward', 'Should have either forward/backward mode'
 
     def log_f_i(z, data, t, log_likelihood_fn=log_bernoulli):
-        """Unnormalized density for intermediate distribution `f_i`.
-        With a gradually increasing `t`: 
+        """Unnormalized density for intermediate distribution `f_i`:
             f_i = p(z)^(1-t) p(x,z)^(t) = p(z) p(x|z)^t
+        =>  log f_i = log p(z) + t * log p(x|z)
         """
         zeros = Variable(torch.zeros(B, z_size).type(mdtype))
         log_prior = log_normal(z, zeros, zeros)
