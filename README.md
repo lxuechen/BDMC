@@ -16,4 +16,5 @@ Since BDMC relies on AIS, and AIS relies on Hamiltonian Monte Carlo (HMC), the r
 
 ## References
 [1] Grosse, Roger B., Zoubin Ghahramani, and Ryan P. Adams. "Sandwiching the marginal likelihood using bidirectional Monte Carlo." arXiv preprint arXiv:1511.02543 (2015).
+
 [2] Neal, Radford M. "Annealed importance sampling." Statistics and computing 11.2 (2001): 125-139.
