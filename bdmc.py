@@ -47,12 +47,16 @@ def bdmc(model, loader, loader_, forward_schedule=np.linspace(0., 1., 500)):
     return forward_logws, backward_logws
 
 
-def main():
+def main(f='checkpoints/model.pth'):
+
     hps = get_default_hparams()
     model = VAE(hps)
     model.cuda()
-    loader = simulate_data(model, batch_size=100, n_batch=10)
-    loader_ = simulate_data(model, batch_size=100, n_batch=10)
+    model.load_state_dict(torch.load(f)['state_dict'])
+    model.eval()
+
+    loader = simulate_data(model, batch_size=100, n_batch=1)
+    loader_ = simulate_data(model, batch_size=100, n_batch=1)
     bdmc(model, loader, loader_)
 
 
