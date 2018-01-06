@@ -11,10 +11,12 @@ BDMC is method of accurately sandwiching the log marginal likelihood (ML) mainly
 
 The given implementation performs evaluation on a variational autoencoder (VAE) trained on MNIST. 
 
-## Other Stuff
-Since BDMC relies on AIS, and AIS relies on Hamiltonian Monte Carlo (HMC), the repo also contains such relevant code. 
+## Others
+Since BDMC relies on AIS, and AIS relies on Hamiltonian Monte Carlo (HMC) [3], the repo also contains such relevant code. 
 
 ## References
 [1] Grosse, Roger B., Zoubin Ghahramani, and Ryan P. Adams. "Sandwiching the marginal likelihood using bidirectional Monte Carlo." arXiv preprint arXiv:1511.02543 (2015).
 
 [2] Neal, Radford M. "Annealed importance sampling." Statistics and computing 11.2 (2001): 125-139.
+
+[3] Neal, Radford M. "MCMC using Hamiltonian dynamics." Handbook of Markov Chain Monte Carlo 2.11 (2011).
