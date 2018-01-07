@@ -48,6 +48,8 @@ def ais_trajectory(model, loader, mode='forward', schedule=np.linspace(0., 1., 5
     _time = time.time()
     logws = []  # for output
 
+    print ('In %s mode' % mode)
+
     for i, (batch, post_z) in enumerate(loader):
 
         B = batch.size(0) * n_sample

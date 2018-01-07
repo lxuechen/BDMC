@@ -59,7 +59,7 @@ def main(f='checkpoints/model.pth'):
     model.load_state_dict(torch.load(f)['state_dict'])
     model.eval()
 
-    loader = simulate_data(model, batch_size=5, n_batch=5)
+    loader = simulate_data(model, batch_size=100, n_batch=10)
     bdmc(model, loader, forward_schedule=np.linspace(0., 1., 500), n_sample=100)
 
 
