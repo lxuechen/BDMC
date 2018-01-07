@@ -1,4 +1,5 @@
 import numpy as np
+import itertools
 import time
 
 import torch
@@ -10,8 +11,8 @@ from vae import VAE
 from hparams import get_default_hparams
 
 
-def bdmc(model, loader, loader_, forward_schedule=np.linspace(0., 1., 500), n_sample=100):
-    """Bidirectional Monte Carlo. Integrate forward and back AIS.
+def bdmc(model, loader, forward_schedule=np.linspace(0., 1., 500), n_sample=100):
+    """Bidirectional Monte Carlo. Integrate forward and backward AIS.
     The backward schedule is the reverse of the forward.
 
     Args:
@@ -25,12 +26,15 @@ def bdmc(model, loader, loader_, forward_schedule=np.linspace(0., 1., 500), n_sa
         Two lists for forward and backward bounds on batchs of data
     """
 
+    # iterator is exhaustable in py3, so need duplicate
+    load, load_ = itertools.tee(loader, 2)
+
     # forward chain
-    forward_logws = ais_trajectory(model, loader, mode='forward', schedule=forward_schedule, n_sample=n_sample)
+    forward_logws = ais_trajectory(model, load, mode='forward', schedule=forward_schedule, n_sample=n_sample)
 
     # backward chain
     backward_schedule = np.flip(forward_schedule, axis=0)
-    backward_logws = ais_trajectory(model, loader_, mode='backward', schedule=backward_schedule, n_sample=n_sample)
+    backward_logws = ais_trajectory(model, load_, mode='backward', schedule=backward_schedule, n_sample=n_sample)
 
     upper_bounds = []
     lower_bounds = []
@@ -55,9 +59,8 @@ def main(f='checkpoints/model.pth'):
     model.load_state_dict(torch.load(f)['state_dict'])
     model.eval()
 
-    loader = simulate_data(model, batch_size=100, n_batch=1)
-    loader_ = simulate_data(model, batch_size=100, n_batch=1)
-    bdmc(model, loader, loader_, forward_schedule=np.linspace(0., 1., 500), n_sample=100)
+    loader = simulate_data(model, batch_size=5, n_batch=5)
+    bdmc(model, loader, forward_schedule=np.linspace(0., 1., 500), n_sample=100)
 
 
 if __name__ == '__main__':
