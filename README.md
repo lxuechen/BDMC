@@ -1,5 +1,5 @@
 # BDMC
-PyTorch implementation of BDMC
+PyTorch implementation of Bidirectional Monte Carlo
 
 ## Requirements
 * `python3`
