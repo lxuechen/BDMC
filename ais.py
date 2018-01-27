@@ -4,8 +4,9 @@ import time
 import torch
 from torch.autograd import Variable
 from torch.autograd import grad as torchgrad
-from utils import log_normal, log_bernoulli, log_mean_exp
+from utils import log_normal, log_bernoulli, log_mean_exp, discretized_logistic, safe_repeat
 from hmc import hmc_trajectory, accept_reject
+from tqdm import tqdm
 
 
 def ais_trajectory(model, loader, mode='forward', schedule=np.linspace(0., 1., 500), n_sample=100):
@@ -37,7 +38,8 @@ def ais_trajectory(model, loader, mode='forward', schedule=np.linspace(0., 1., 5
         """
         zeros = Variable(torch.zeros(B, z_size).type(mdtype))
         log_prior = log_normal(z, zeros, zeros)
-        log_likelihood = log_likelihood_fn(model.decode(z), data)
+        # log_likelihood = log_likelihood_fn(model.decode(z), data)
+        log_likelihood = discretized_logistic(*model.decode(z), data)
 
         return log_prior + log_likelihood.mul_(t)
 
@@ -53,7 +55,8 @@ def ais_trajectory(model, loader, mode='forward', schedule=np.linspace(0., 1., 5
     for i, (batch, post_z) in enumerate(loader):
 
         B = batch.size(0) * n_sample
-        batch = Variable(batch.type(mdtype)).repeat(n_sample, 1)
+        batch = Variable(batch.type(mdtype))
+        batch = safe_repeat(batch, n_sample)
 
         # batch of step sizes, one for each chain
         epsilon = Variable(torch.ones(B).type(model.dtype)).mul_(0.01)
@@ -66,10 +69,9 @@ def ais_trajectory(model, loader, mode='forward', schedule=np.linspace(0., 1., 5
         if mode == 'forward':
             current_z = Variable(torch.randn(B, z_size).type(mdtype), requires_grad=True)
         else:
-            current_z = Variable(post_z.repeat(n_sample, 1).type(mdtype), requires_grad=True)
+            current_z = Variable(safe_repeat(post_z, n_sample).type(mdtype), requires_grad=True)
 
-        for j, (t0, t1) in enumerate(zip(schedule[:-1], schedule[1:]), 1):
-
+        for j, (t0, t1) in tqdm(enumerate(zip(schedule[:-1], schedule[1:]), 1)):
             # update log importance weight
             log_int_1 = log_f_i(current_z, batch, t0)
             log_int_2 = log_f_i(current_z, batch, t1)
@@ -86,6 +88,8 @@ def ais_trajectory(model, loader, mode='forward', schedule=np.linspace(0., 1., 5
                 grad_outputs = torch.ones(B).type(mdtype)
                 # torch.autograd.grad default returns volatile
                 grad = torchgrad(U(z), z, grad_outputs=grad_outputs)[0]
+                # clip by norm
+                grad = torch.clamp(grad, -B*z_size*100, B*z_size*100)
                 # needs variable wrapper to make differentiable
                 grad = Variable(grad.data, requires_grad=True)
                 return grad
