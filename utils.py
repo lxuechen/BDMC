@@ -83,7 +83,7 @@ def discretized_logistic(mu, logs, x):
     sigmoid = torch.nn.Sigmoid()
 
     s = torch.exp(logs).unsqueeze(-1).unsqueeze(-1)
-    logp = torch.log( sigmoid( (x + 1./256. - mu) / s ) - sigmoid( (x - mu) / s ) + 1e-7)
+    logp = torch.log(sigmoid((x + 1./256. - mu) / s) - sigmoid((x - mu) / s) + 1e-7)
 
     return logp.sum(-1).sum(-1).sum(-1)
 
@@ -96,3 +96,7 @@ def log_mean_exp(x):
 
 def numpy_nan_guard(arr):
     return np.all(arr == arr)
+
+
+def safe_repeat(x, n):
+    return x.repeat(n, *[1 for _ in range(len(x.size()) - 1)])
