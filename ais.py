@@ -38,8 +38,7 @@ def ais_trajectory(model, loader, mode='forward', schedule=np.linspace(0., 1., 5
         """
         zeros = Variable(torch.zeros(B, z_size).type(mdtype))
         log_prior = log_normal(z, zeros, zeros)
-        # log_likelihood = log_likelihood_fn(model.decode(z), data)
-        log_likelihood = discretized_logistic(*model.decode(z), data)
+        log_likelihood = log_likelihood_fn(model.decode(z), data)
 
         return log_prior + log_likelihood.mul_(t)
 
