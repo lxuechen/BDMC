@@ -1,13 +1,13 @@
 # BDMC
 PyTorch implementation of Bidirectional Monte Carlo.
 
-**This repo needs update due to change of the `volatile` API in pytorch.**
-
 ## Requirements
 * `python3`
 * `numpy`
-* `pytorch`
+* `pytorch v0.2.0` 
 * `tqdm`
+
+**Due to drastic changes in pytorch API, any version later than 0.2.0 can fail to work with the code in repo.**
 
 ## What is Bidirectional Monte Carlo (BDMC)?
 BDMC is a method of accurately sandwiching the log marginal likelihood (ML). It is mainly used to evaluate the quality of log-ML estimators [1]. The method achieves this by obtaining a lower bound with the usual Annealed Importance Sampling (AIS) [2], and an upper bound with Reversed AIS from an exact posterior sample. Since the upper bound requires an *exact* sample from the posterior, the method is only strictly valid on simulated data. However, the results obtained on simulated data can help verify the performance of log-ML estimators. Conditioned upon the assumption that the real data does not differ too much from the simulated data, the evaluation of the log-ML estimator on simulated data could be informative of the performance on real data.
