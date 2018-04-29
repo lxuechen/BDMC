@@ -1,5 +1,6 @@
 # BDMC
-PyTorch implementation of Bidirectional Monte Carlo
+PyTorch implementation of Bidirectional Monte Carlo.
+**This repo needs update due to change of the `volatile` API in pytorch.**
 
 ## Requirements
 * `python3`
