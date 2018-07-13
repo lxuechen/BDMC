@@ -14,6 +14,16 @@ BDMC is a method of accurately sandwiching the log marginal likelihood (ML). It 
 
 The given implementation performs evaluation on a variational autoencoder (VAE) trained on MNIST. 
 
+## To run
+There is a pretrained VAE model (on MNIST) in the `checkpoints` folder. By default, executing
+```bash
+python bdmc.py
+```
+will start the forward and backwards chain of BDMC based on the model loaded from the pretrained checkpoint.
+
+# Implementation Details
+The presented implementation is based on pytorch v0.2.0 and sets `volatile=True` at certain points to avoid memory overflow caused by using extravagantly long AIS chains. An equivalent TensorFlow graph-mode implementation ideally would require using `tf.while_loop` or abstracting only part of the graph (calling `session.run` multiple times during a chain).
+
 ## Others
 Since BDMC relies on AIS, and AIS (sometimes) relies on Hamiltonian Monte Carlo (HMC) [3], the repo also contains such relevant code. 
 
