@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 import itertools
 import time
@@ -31,12 +32,20 @@ def bdmc(model, loader, forward_schedule=np.linspace(0., 1., 500), n_sample=100)
 
   # forward chain
   forward_logws = ais_trajectory(
-      model, load, mode='forward', schedule=forward_schedule, n_sample=n_sample)
+      model,
+      load,
+      mode='forward',
+      schedule=forward_schedule,
+      n_sample=n_sample)
 
   # backward chain
   backward_schedule = np.flip(forward_schedule, axis=0)
   backward_logws = ais_trajectory(
-      model, load_, mode='backward', schedule=backward_schedule, n_sample=n_sample)
+      model,
+      load_,
+      mode='backward',
+      schedule=backward_schedule,
+      n_sample=n_sample)
 
   upper_bounds = []
   lower_bounds = []

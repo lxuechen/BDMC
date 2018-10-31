@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 import time
 
@@ -11,25 +12,25 @@ from tqdm import tqdm
 
 def ais_trajectory(model, loader, mode='forward', schedule=np.linspace(0., 1., 500), n_sample=100):
   """Compute annealed importance sampling trajectories for a batch of data. 
-  Could be used for *both* forward and reverse chain in bidirectional Monte Carlo
-  (default: forward chain with linear schedule).
+  Could be used for *both* forward and reverse chain in BDMC.
 
   Args:
-      model (vae.VAE): VAE model
-      loader (iterator): iterator that returns pairs, with first component being `x`,
-          second would be `z` or label (will not be used)
-      mode (string): indicate forward/backward chain; must be either `forward` or 'backward'
-      schedule (list or 1D np.ndarray): temperature schedule, i.e. `p(z)p(x|z)^t`;
-          foward chain has increasing values, whereas backward has decreasing values
-      n_sample (int): number of importance samples (i.e. number of parallel chains 
-          for each datapoint)
+    model (vae.VAE): VAE model
+    loader (iterator): iterator that returns pairs, with first component
+      being `x`, second would be `z` or label (will not be used)
+    mode (string): indicate forward/backward chain; must be either `forward`
+      or 'backward' schedule (list or 1D np.ndarray): temperature schedule,
+      i.e. `p(z)p(x|z)^t`; foward chain has increasing values, whereas
+      backward has decreasing values
+    n_sample (int): number of importance samples (i.e. number of parallel
+      chains for each datapoint)
 
   Returns:
       A list where each element is a torch.autograd.Variable that contains the 
       log importance weights for a single batch of data
   """
 
-  assert mode == 'forward' or mode == 'backward', 'Should have either forward/backward mode'
+  assert mode == 'forward' or mode == 'backward', 'Either forward or backward'
 
   def log_f_i(z, data, t, log_likelihood_fn=log_bernoulli):
     """Unnormalized density for intermediate distribution `f_i`:
