@@ -1,9 +1,4 @@
 from __future__ import print_function
-import sys
-import os
-import math
-import torch
-import numpy as np
 
 import torch
 from torch.autograd import Variable

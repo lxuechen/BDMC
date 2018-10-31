@@ -1,18 +1,10 @@
 from __future__ import print_function
-import numpy as np
-import pickle
-import time
-import sys
-import shutil
-import argparse
 
 import torch
 import torch.utils.data
 import torch.optim as optim
 import torch.nn as nn
 import torch.nn.functional as F
-
-from torch.nn.utils import weight_norm
 from torch.autograd import Variable
 
 from utils import log_normal, log_bernoulli, log_mean_exp

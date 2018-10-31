@@ -1,6 +1,6 @@
 from __future__ import print_function
+
 import numpy as np
-import numpy.linalg as linalg
 
 import torch
 from torch.autograd import Variable

@@ -1,7 +1,7 @@
 from __future__ import print_function
+
 import numpy as np
 import itertools
-import time
 
 import torch
 from torch.autograd import Variable
@@ -13,16 +13,16 @@ from hparams import get_default_hparams
 
 
 def bdmc(model, loader, forward_schedule=np.linspace(0., 1., 500), n_sample=100):
-  """Bidirectional Monte Carlo. Integrate forward and backward AIS.
-  The backward schedule is the reverse of the forward.
+  """Bidirectional Monte Carlo. Backward schedule is set to be the reverse of
+  the forward schedule.
 
   Args:
-      model (vae.VAE): VAE model
-      loader (iterator): iterator to loop over pairs of Variables; the first 
-          entry being `x`, the second being `z` sampled from the true 
-          posterior `p(z|x)`
-      forward_schedule (list or numpy.ndarray): forward temperature schedule;
-          backward schedule is used as its reverse
+    model (vae.VAE): VAE model
+    loader (iterator): iterator to loop over pairs of Variables; the first 
+      entry being `x`, the second being `z` sampled from the *true* 
+      posterior `p(z|x)`
+    forward_schedule (list or numpy.ndarray): forward temperature schedule
+
   Returns:
       Two lists for forward and backward bounds on batchs of data
   """
@@ -34,7 +34,7 @@ def bdmc(model, loader, forward_schedule=np.linspace(0., 1., 500), n_sample=100)
   forward_logws = ais_trajectory(
       model,
       load,
-      mode='forward',
+      forward=True,
       schedule=forward_schedule,
       n_sample=n_sample)
 
@@ -43,7 +43,7 @@ def bdmc(model, loader, forward_schedule=np.linspace(0., 1., 500), n_sample=100)
   backward_logws = ais_trajectory(
       model,
       load_,
-      mode='backward',
+      forward=False,
       schedule=backward_schedule,
       n_sample=n_sample)
 
