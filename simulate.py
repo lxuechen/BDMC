@@ -25,18 +25,16 @@ def simulate_data(model, batch_size=10, n_batch=1):
   """
 
   # shorter aliases
-  z_size = model.hps.z_size
-  mdtype = model.dtype
 
   batches = []
   for i in range(n_batch):
     # assume prior for VAE is unit Gaussian
-    z = torch.randn(batch_size, z_size).type(mdtype)
-    x_logits = model.decode(Variable(z))
+    z = torch.randn(batch_size, model.latent_dim).cuda()
+    x_logits = model.decode(z)
     if isinstance(x_logits, tuple):
       x_logits = x_logits[0]
     x_bernoulli_dist = Bernoulli(probs=x_logits.sigmoid())
-    x = x_bernoulli_dist.sample().data.type(mdtype)
+    x = x_bernoulli_dist.sample().data
 
     paired_batch = (x, z)
     batches.append(paired_batch)

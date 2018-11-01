@@ -36,14 +36,11 @@ def ais_trajectory(model,
         f_i = p(z)^(1-t) p(x,z)^(t) = p(z) p(x|z)^t
     =>  log f_i = log p(z) + t * log p(x|z)
     """
-    zeros = Variable(torch.zeros(B, z_size).cuda())
+    zeros = torch.zeros(B, model.latent_dim).cuda()
     log_prior = utils.log_normal(z, zeros, zeros)
     log_likelihood = log_likelihood_fn(model.decode(z), data)
 
     return log_prior + log_likelihood.mul_(t)
-
-  # shorter aliases
-  z_size = model.hps.z_size
 
   logws = []
   for i, (batch, post_z) in enumerate(loader):
@@ -62,7 +59,7 @@ def ais_trajectory(model,
     # initial sample of z
     if forward:
       current_z = Variable(
-          torch.randn(B, z_size).cuda(), requires_grad=True)
+          torch.randn(B, model.latent_dim).cuda(), requires_grad=True)
     else:
       current_z = Variable(
           utils.safe_repeat(post_z, n_sample).cuda(), requires_grad=True)
@@ -85,13 +82,14 @@ def ais_trajectory(model,
         # torch.autograd.grad default returns volatile
         grad = torchgrad(U(z), z, grad_outputs=grad_outputs)[0]
         # clip by norm
-        grad = torch.clamp(grad, -B * z_size * 100, B * z_size * 100)
+        max_ = B * model.latent_dim * 100.
+        grad = torch.clamp(grad, -max_, max_)
         # needs variable wrapper to make differentiable
         grad = Variable(grad.data, requires_grad=True)
         return grad
 
       def normalized_kinetic(v):
-        zeros = Variable(torch.zeros(B, z_size).cuda())
+        zeros = torch.zeros(B, model.latent_dim).cuda()
         # this is superior to the unnormalized version
         return -utils.log_normal(v, zeros, zeros)
 

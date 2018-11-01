@@ -7,72 +7,46 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 
-from utils import log_normal, log_bernoulli, log_mean_exp
+import utils
 
 
 class VAE(nn.Module):
 
-  def __init__(self, hps, seed=1):
+  def __init__(self, latent_dim=50, act_fn=F.elu):
     super(VAE, self).__init__()
-    torch.manual_seed(seed)
 
-    self.hps = hps
-
-    self.dtype = torch.cuda.FloatTensor if hps.cuda else torch.FloatTensor
-    self.init_layers()
-
-  def init_layers(self):
+    self.latent_dim = latent_dim
+    self.act_fn = act_fn
 
     self.fc1 = nn.Linear(784, 200)
     self.fc2 = nn.Linear(200, 200)
-    self.fc3 = nn.Linear(200, self.hps.z_size * 2)
+    self.fc3 = nn.Linear(200, latent_dim * 2)
 
-    self.fc4 = nn.Linear(self.hps.z_size, 200)
+    self.fc4 = nn.Linear(latent_dim, 200)
     self.fc5 = nn.Linear(200, 200)
     self.fc6 = nn.Linear(200, 784)
 
   def sample(self, mu, logvar):
-
-    bs = mu.size()[0]
-    zs = self.hps.z_size
-
-    eps = Variable(torch.FloatTensor(mu.size()).normal_().type(self.dtype))
+    eps = torch.randn(mu.size()).cuda()
     z = eps.mul(logvar.mul(0.5).exp_()).add_(mu)
-    logqz = log_normal(z, mu, logvar)
+    logqz = utils.log_normal(z, mu, logvar)
 
-    # if self.hps.has_flow:
-    #     z, logprob = self.q_dist.forward(z)
-    #     logqz += logprob
-
-    zeros = Variable(torch.zeros(z.size()).type(self.dtype))
-    logpz = log_normal(z, zeros, zeros)
+    zeros = torch.zeros(z.size()).cuda()
+    logpz = utils.log_normal(z, zeros, zeros)
 
     return z, logpz, logqz
 
   def encode(self, net):
-
-    f = self.hps.act_func
-    zs = self.hps.z_size
-
-    net = f(self.fc1(net))
-    net = f(self.fc2(net))
+    net = self.act_fn(self.fc1(net))
+    net = self.act_fn(self.fc2(net))
     net = self.fc3(net)
 
-    mean, logvar = net[:, :zs], net[:, zs:]
-
-    return mean, logvar
+    return net[:, :zs], net[:, zs:]
 
   def decode(self, net):
-
-    f = self.hps.act_func
-
-    net = f(self.fc4(net))
-    net = f(self.fc5(net))
-    net = self.fc6(net)
-
-    x_logits = net
-
-    return x_logits
+    net = self.act_fn(self.fc4(net))
+    net = self.act_fn(self.fc5(net))
+    return self.fc6(net)
 
   def forward(self, x, k=1, warmup_const=1.):
 
@@ -81,11 +55,11 @@ class VAE(nn.Module):
     z, logpz, logqz = self.sample(mu, logvar)
     x_logits = self.decode(z)
 
-    logpx = log_bernoulli(x_logits, x)
-    elbo = logpx + logpz - warmup_const * logqz  # custom warmup
+    logpx = utils.log_bernoulli(x_logits, x)
+    elbo = logpx + logpz - warmup_const * logqz
 
     # need correction for Tensor.repeat
-    elbo = log_mean_exp(elbo.view(k, -1).transpose(0, 1))
+    elbo = utils.log_mean_exp(elbo.view(k, -1).transpose(0, 1))
     elbo = torch.mean(elbo)
 
     logpx = torch.mean(logpx)
