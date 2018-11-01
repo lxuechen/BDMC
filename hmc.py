@@ -53,19 +53,17 @@ def accept_reject(current_z, current_v,
   propose_Hamil = K(v) + U(z)
 
   prob = torch.exp(current_Hamil - propose_Hamil)
-  uniform_sample = torch.rand(prob.size())
-  uniform_sample = Variable(uniform_sample.cuda())
-  accept = (prob > uniform_sample).float().cuda()
-  z = z.mul(accept.view(-1, 1)) + current_z.mul(1. - accept.view(-1, 1))
 
-  accept_hist = accept_hist.add(accept)
-  criteria = (accept_hist / hist_len > 0.65).float().cuda()
-  adapt = 1.02 * criteria + 0.98 * (1. - criteria)
-  epsilon = epsilon.mul(adapt).clamp(1e-4, .5)
+  with torch.no_grad():
+    uniform_sample = torch.rand(prob.size()).cuda()
+    accept = (prob > uniform_sample).float().cuda()
+    z = z.mul(accept.view(-1, 1)) + current_z.mul(1. - accept.view(-1, 1))
 
-  # clear previous history & save memory, similar to detach
-  z = Variable(z.data, requires_grad=True)
-  epsilon = Variable(epsilon.data)
-  accept_hist = Variable(accept_hist.data)
+    accept_hist = accept_hist.add(accept)
+    criteria = (accept_hist / hist_len > 0.65).float().cuda()
+    adapt = 1.02 * criteria + 0.98 * (1. - criteria)
+    epsilon = epsilon.mul(adapt).clamp(1e-4, .5)
+
+  z.requires_grad_()
 
   return z, epsilon, accept_hist
