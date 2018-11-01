@@ -6,10 +6,12 @@ import itertools
 import torch
 from torch.autograd import Variable
 from torch.autograd import grad as torchgrad
-from ais import ais_trajectory
-from simulate import simulate_data
-from vae import VAE
-from hparams import get_default_hparams
+import torch.nn.functional as F
+
+import ais
+import simulate
+import vae
+import hparams
 
 
 def bdmc(model,
@@ -34,7 +36,7 @@ def bdmc(model,
   load, load_ = itertools.tee(loader, 2)
 
   # forward chain
-  forward_logws = ais_trajectory(
+  forward_logws = ais.ais_trajectory(
       model,
       load,
       forward=True,
@@ -43,7 +45,7 @@ def bdmc(model,
 
   # backward chain
   backward_schedule = np.flip(forward_schedule, axis=0)
-  backward_logws = ais_trajectory(
+  backward_logws = ais.ais_trajectory(
       model,
       load_,
       forward=False,
@@ -66,15 +68,24 @@ def bdmc(model,
   return forward_logws, backward_logws
 
 
-def main(f='checkpoints/model.pth'):
+def get_default_hparams():
+  return hparams.HParams(
+      z_size=50,
+      act_func=F.elu,
+      has_flow=False,
+      large_encoder=False,
+      wide_encoder=False,
+      cuda=True)
 
+
+def main(f='checkpoints/model.pth'):
   hps = get_default_hparams()
-  model = VAE(hps)
+  model = vae.VAE(hps)
   model.cuda()
   model.load_state_dict(torch.load(f)['state_dict'])
   model.eval()
 
-  loader = simulate_data(model, batch_size=100, n_batch=10)
+  loader = simulate.simulate_data(model, batch_size=100, n_batch=10)
   bdmc(model, loader, forward_schedule=np.linspace(0., 1., 500), n_sample=100)
 
 

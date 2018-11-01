@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 import numpy as np
-import tqdm
+from tqdm import tqdm
 
 import torch
 from torch.autograd import Variable
@@ -36,7 +36,7 @@ def ais_trajectory(model,
         f_i = p(z)^(1-t) p(x,z)^(t) = p(z) p(x|z)^t
     =>  log f_i = log p(z) + t * log p(x|z)
     """
-    zeros = Variable(torch.zeros(B, z_size).type(mdtype))
+    zeros = Variable(torch.zeros(B, z_size).cuda())
     log_prior = utils.log_normal(z, zeros, zeros)
     log_likelihood = log_likelihood_fn(model.decode(z), data)
 
@@ -44,30 +44,29 @@ def ais_trajectory(model,
 
   # shorter aliases
   z_size = model.hps.z_size
-  mdtype = model.dtype
 
   logws = []
   for i, (batch, post_z) in enumerate(loader):
 
     B = batch.size(0) * n_sample
-    batch = Variable(batch.type(mdtype))
+    batch = Variable(batch.cuda())
     batch = utils.safe_repeat(batch, n_sample)
 
     # batch of step sizes, one for each chain
-    epsilon = Variable(torch.ones(B).type(model.dtype)).mul_(0.01)
+    epsilon = Variable(torch.ones(B).cuda()).mul_(0.01)
     # accept/reject history for tuning step size
-    accept_hist = Variable(torch.zeros(B).type(model.dtype))
-    # record log importance weight; volatile=True reduces memory greatly
-    logw = Variable(torch.zeros(B).type(mdtype), volatile=True)
+    accept_hist = Variable(torch.zeros(B).cuda())
+    with torch.no_grad():  # Avoid OOM for long chains
+      logw = Variable(torch.zeros(B).cuda())
 
     # initial sample of z
     if forward:
-      current_z = Variable(torch.randn(
-          B, z_size).type(mdtype), requires_grad=True)
+      current_z = Variable(
+          torch.randn(B, z_size).cuda(), requires_grad=True)
     else:
-      current_z = Variable(utils.safe_repeat(
-          post_z, n_sample).type(mdtype), requires_grad=True)
-
+      current_z = Variable(
+          utils.safe_repeat(post_z, n_sample).cuda(), requires_grad=True)
+    
     for j, (t0, t1) in tqdm(enumerate(zip(schedule[:-1], schedule[1:]), 1)):
       # update log importance weight
       log_int_1 = log_f_i(current_z, batch, t0)
@@ -75,14 +74,14 @@ def ais_trajectory(model,
       logw.add_(log_int_2 - log_int_1)
 
       # resample speed
-      current_v = Variable(torch.randn(current_z.size()).type(mdtype))
+      current_v = Variable(torch.randn(current_z.size()).cuda())
 
       def U(z):
         return -log_f_i(z, batch, t1)
 
       def grad_U(z):
         # grad w.r.t. outputs; mandatory in this case
-        grad_outputs = torch.ones(B).type(mdtype)
+        grad_outputs = torch.ones(B).cuda()
         # torch.autograd.grad default returns volatile
         grad = torchgrad(U(z), z, grad_outputs=grad_outputs)[0]
         # clip by norm
@@ -92,7 +91,7 @@ def ais_trajectory(model,
         return grad
 
       def normalized_kinetic(v):
-        zeros = Variable(torch.zeros(B, z_size).type(mdtype))
+        zeros = Variable(torch.zeros(B, z_size).cuda())
         # this is superior to the unnormalized version
         return -utils.log_normal(v, zeros, zeros)
 

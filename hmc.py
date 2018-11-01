@@ -41,29 +41,25 @@ def accept_reject(current_z, current_v,
   """Accept/reject based on Hamiltonians for current and propose.
 
   Args:
-      current_z: position BEFORE leap-frog steps
-      current_v: speed BEFORE leap-frog steps
-      z: position AFTER leap-frog steps
-      v: speed AFTER leap-frog steps
+      current_z: position *before* leap-frog steps
+      current_v: speed *before* leap-frog steps
+      z: position *after* leap-frog steps
+      v: speed *after* leap-frog steps
       epsilon: step size of leap-frog.
-              (This is only needed for adaptive update)
-      U: function to compute potential energy (*minus* log-density)
+      U: function to compute potential energy
       K: function to compute kinetic energy
   """
-
-  mdtype = type(current_z.data)
-
   current_Hamil = K(current_v) + U(current_z)
   propose_Hamil = K(v) + U(z)
 
   prob = torch.exp(current_Hamil - propose_Hamil)
   uniform_sample = torch.rand(prob.size())
-  uniform_sample = Variable(uniform_sample.type(mdtype))
-  accept = (prob > uniform_sample).type(mdtype)
+  uniform_sample = Variable(uniform_sample.cuda())
+  accept = (prob > uniform_sample).float().cuda()
   z = z.mul(accept.view(-1, 1)) + current_z.mul(1. - accept.view(-1, 1))
 
   accept_hist = accept_hist.add(accept)
-  criteria = (accept_hist / hist_len > 0.65).type(mdtype)
+  criteria = (accept_hist / hist_len > 0.65).float().cuda()
   adapt = 1.02 * criteria + 0.98 * (1. - criteria)
   epsilon = epsilon.mul(adapt).clamp(1e-4, .5)
 

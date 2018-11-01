@@ -21,22 +21,11 @@ class VAE(nn.Module):
     self.dtype = torch.cuda.FloatTensor if hps.cuda else torch.FloatTensor
     self.init_layers()
 
-    # if self.hps.has_flow:
-    #     self.q_dist = Flow(self)
-    #     if hps.cuda:
-    #         self.q_dist.cuda()
-
   def init_layers(self):
 
-    h_s = 500 if self.hps.wide_encoder else 200
-
-    # MNIST
-    self.fc1 = nn.Linear(784, h_s)
-    self.fc2 = nn.Linear(h_s, h_s)
-    self.fc3 = nn.Linear(h_s, self.hps.z_size * 2)
-
-    if self.hps.large_encoder:
-      self.fc_extra = nn.Linear(h_s, h_s)
+    self.fc1 = nn.Linear(784, 200)
+    self.fc2 = nn.Linear(200, 200)
+    self.fc3 = nn.Linear(200, self.hps.z_size * 2)
 
     self.fc4 = nn.Linear(self.hps.z_size, 200)
     self.fc5 = nn.Linear(200, 200)
@@ -67,10 +56,6 @@ class VAE(nn.Module):
 
     net = f(self.fc1(net))
     net = f(self.fc2(net))
-
-    if self.hps.large_encoder:
-      net = f(self.fc_extra(net))
-
     net = self.fc3(net)
 
     mean, logvar = net[:, :zs], net[:, zs:]

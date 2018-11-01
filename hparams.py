@@ -1,7 +1,5 @@
 from __future__ import print_function
 
-import torch.nn.functional as F
-
 
 class HParams(object):
 
@@ -33,15 +31,3 @@ class HParams(object):
       else:
         hps._set(key, value)
     return hps
-
-
-def get_default_hparams():
-
-  return HParams(
-      z_size=50,
-      act_func=F.elu,
-      has_flow=False,
-      large_encoder=False,
-      wide_encoder=False,
-      cuda=True,
-  )
