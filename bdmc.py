@@ -12,7 +12,10 @@ from vae import VAE
 from hparams import get_default_hparams
 
 
-def bdmc(model, loader, forward_schedule=np.linspace(0., 1., 500), n_sample=100):
+def bdmc(model,
+         loader,
+         forward_schedule=np.linspace(0., 1., 500),
+         n_sample=100):
   """Bidirectional Monte Carlo. Backward schedule is set to be the reverse of
   the forward schedule.
 

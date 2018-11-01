@@ -47,8 +47,8 @@ def accept_reject(current_z, current_v,
       v: speed AFTER leap-frog steps
       epsilon: step size of leap-frog.
               (This is only needed for adaptive update)
-      U: function to compute potential energy (MINUS log-density)
-      K: function to compute kinetic energy (default: kinetic energy in physics w/ mass=1)
+      U: function to compute potential energy (*minus* log-density)
+      K: function to compute kinetic energy
   """
 
   mdtype = type(current_z.data)

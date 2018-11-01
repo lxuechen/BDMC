@@ -18,7 +18,8 @@ def log_normal(x, mean, logvar):
       output: [B]
   """
 
-  return -0.5 * (logvar.sum(1) + ((x - mean).pow(2) / torch.exp(logvar)).sum(1))
+  return -0.5 * (
+      logvar.sum(1) + ((x - mean).pow(2) / torch.exp(logvar)).sum(1))
 
 
 def log_normal_full_cov(x, mean, L):
