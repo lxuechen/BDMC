@@ -4,7 +4,6 @@ import numpy as np
 from tqdm import tqdm
 
 import torch
-from torch.autograd import Variable
 from torch.autograd import grad as torchgrad
 import hmc
 import utils
@@ -44,7 +43,6 @@ def ais_trajectory(model,
 
   logws = []
   for i, (batch, post_z) in enumerate(loader):
-
     B = batch.size(0) * n_sample
     batch = batch.cuda()
     batch = utils.safe_repeat(batch, n_sample)
@@ -86,12 +84,9 @@ def ais_trajectory(model,
 
       def normalized_kinetic(v):
         zeros = torch.zeros(B, model.latent_dim).cuda()
-        # this is superior to the unnormalized version
         return -utils.log_normal(v, zeros, zeros)
 
       z, v = hmc.hmc_trajectory(current_z, current_v, U, grad_U, epsilon)
-
-      # accept-reject step
       current_z, epsilon, accept_hist = hmc.accept_reject(
           current_z, current_v,
           z, v,
@@ -99,13 +94,10 @@ def ais_trajectory(model,
           accept_hist, j,
           U, K=normalized_kinetic)
 
-    # IWAE lower bound
     logw = utils.log_mean_exp(logw.view(n_sample, -1).transpose(0, 1))
     if not forward:
       logw = -logw
-
     logws.append(logw.data)
-
     print('Last batch stats %.4f' % (logw.mean().cpu().data.numpy()))
 
   return logws

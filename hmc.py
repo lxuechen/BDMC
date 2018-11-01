@@ -1,7 +1,6 @@
 from __future__ import print_function
 
 import torch
-from torch.autograd import Variable
 
 
 def hmc_trajectory(current_z, current_v, U, grad_U, epsilon, L=10):
@@ -14,10 +13,6 @@ def hmc_trajectory(current_z, current_v, U, grad_U, epsilon, L=10):
       L: number of leap-frog steps
       current_z: current position
   """
-
-  # as of `torch-0.3.0.post4`, there still is no proper scalar support
-  assert isinstance(epsilon, Variable)
-
   eps = epsilon.view(-1, 1)
   z = current_z
   v = current_v - grad_U(z).mul(eps).mul_(.5)

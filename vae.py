@@ -1,11 +1,8 @@
 from __future__ import print_function
 
 import torch
-import torch.utils.data
-import torch.optim as optim
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.autograd import Variable
 
 import utils
 

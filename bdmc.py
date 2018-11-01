@@ -5,8 +5,6 @@ import numpy as np
 import itertools
 
 import torch
-from torch.autograd import Variable
-from torch.autograd import grad as torchgrad
 import torch.nn.functional as F
 
 import ais
