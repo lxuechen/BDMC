@@ -17,7 +17,7 @@ parser.add_argument('--latent-dim', type=int, default=50, metavar='D',
                     help='number of latent variables (default: 50)')
 parser.add_argument('--batch-size', type=int, default=10, metavar='N',
                     help='number of examples to eval at once (default: 10)')
-parser.add_argument('--n_batch', type=int, default=10, metavar='B',
+parser.add_argument('--n-batch', type=int, default=10, metavar='B',
                     help='number of batches to eval in total (default: 10)')
 parser.add_argument('--chain-length', type=int, default=500, metavar='L',
                     help='length of ais chain (default: 500)')
