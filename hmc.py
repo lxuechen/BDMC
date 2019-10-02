@@ -23,7 +23,7 @@ def hmc_trajectory(current_z, current_v, U, grad_U, epsilon, L=10):
       v = v - grad_U(z).mul(eps)
 
   v = v - grad_U(z).mul(eps).mul_(.5)
-  v = -v  # this is not needed; only here to conform to the math
+  v = -v
 
   return z.detach(), v.detach()
 
