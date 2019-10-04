@@ -67,8 +67,8 @@ def bdmc(model, loader, forward_schedule, n_sample):
   lower_bounds = []
 
   for i, (forward, backward) in enumerate(zip(forward_logws, backward_logws)):
-    lower_bounds.append(forward.mean())
-    upper_bounds.append(backward.mean())
+    lower_bounds.append(forward.mean().detach().item())
+    upper_bounds.append(backward.mean().detach().item())
 
   upper_bounds = np.mean(upper_bounds)
   lower_bounds = np.mean(lower_bounds)
