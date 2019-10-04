@@ -47,7 +47,7 @@ def accept_reject(current_z, current_v,
   current_Hamil = K(current_v) + U(current_z)
   propose_Hamil = K(v) + U(z)
 
-  prob = torch.exp(current_Hamil - propose_Hamil)
+  prob = torch.clamp_max(torch.exp(current_Hamil - propose_Hamil), 1.)
 
   with torch.no_grad():
     uniform_sample = torch.rand(prob.size()).cuda()
