@@ -1,12 +1,8 @@
-from __future__ import print_function
+import sys
+import time
 
 import numpy as np
-import time
-import sys
-
-import torch
 from torch.autograd import Variable
-from vae import VAE
 
 
 def iwae_eval(model, loader, n_sample=100):

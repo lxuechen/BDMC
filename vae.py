@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -46,7 +44,6 @@ class VAE(nn.Module):
     return self.fc6(net)
 
   def forward(self, x, k=1, warmup_const=1.):
-
     x = x.repeat(k, 1)
     mu, logvar = self.encode(x)
     z, logpz, logqz = self.sample(mu, logvar)
