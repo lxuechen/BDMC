@@ -63,7 +63,7 @@ def ais_trajectory(model,
       # update log importance weight
       log_int_1 = log_f_i(current_z, batch, t0)
       log_int_2 = log_f_i(current_z, batch, t1)
-      logw += log_int_2 - log_int_1
+      logw += log_int_2.detach() - log_int_1.detach()
 
       # resample velocity
       current_v = torch.randn(current_z.size()).cuda()
