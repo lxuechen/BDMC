@@ -1,20 +1,22 @@
-from __future__ import print_function
-
 import numpy as np
+import torch
 from tqdm import tqdm
 
-import torch
-from torch.autograd import grad as torchgrad
 import hmc
 import utils
 
 
-def ais_trajectory(model,
-                   loader,
-                   forward=True,
-                   schedule=np.linspace(0., 1., 500),
-                   n_sample=100):
-  """Compute annealed importance sampling trajectories for a batch of data. 
+@torch.no_grad()
+def ais_trajectory(
+    model,
+    loader,
+    forward=True,
+    schedule=np.linspace(0., 1., 500),
+    n_sample=100,
+    device=None,
+):
+  """Compute annealed importance sampling trajectories for a batch of data.
+
   Could be used for *both* forward and reverse chain in BDMC.
 
   Args:
@@ -35,7 +37,7 @@ def ais_trajectory(model,
         f_i = p(z)^(1-t) p(x,z)^(t) = p(z) p(x|z)^t
     =>  log f_i = log p(z) + t * log p(x|z)
     """
-    zeros = torch.zeros(B, model.latent_dim).cuda()
+    zeros = torch.zeros(size=(B, model.latent_dim), device=device)
     log_prior = utils.log_normal(z, zeros, zeros)
     log_likelihood = log_likelihood_fn(model.decode(z), data)
 
@@ -44,20 +46,18 @@ def ais_trajectory(model,
   logws = []
   for i, (batch, post_z) in enumerate(loader):
     B = batch.size(0) * n_sample
-    batch = batch.cuda()
+    batch = batch.to(device)
     batch = utils.safe_repeat(batch, n_sample)
 
-    with torch.no_grad():
-      epsilon = torch.ones(B).cuda().mul_(0.01)
-      accept_hist = torch.zeros(B).cuda()
-      logw = torch.zeros(B).cuda()
+    epsilon = torch.ones(size=(B,), device=device).mul_(0.01)
+    accept_hist = torch.zeros(size=(B,), device=device)
+    logw = torch.zeros(size=(B,), device=device)
 
     # initial sample of z
     if forward:
-      current_z = torch.randn(B, model.latent_dim).cuda()
+      current_z = torch.randn(size=(B, model.latent_dim), device=device)
     else:
-      current_z = utils.safe_repeat(post_z, n_sample).cuda()
-    current_z = current_z.requires_grad_()
+      current_z = utils.safe_repeat(post_z, n_sample).to(device)
 
     for j, (t0, t1) in tqdm(enumerate(zip(schedule[:-1], schedule[1:]), 1)):
       # update log importance weight
@@ -66,33 +66,31 @@ def ais_trajectory(model,
       logw += log_int_2 - log_int_1
 
       # resample velocity
-      current_v = torch.randn(current_z.size()).cuda()
+      current_v = torch.randn(size=current_z.size(), device=device)
 
       def U(z):
         return -log_f_i(z, batch, t1)
 
+      @torch.enable_grad()
       def grad_U(z):
-        # grad w.r.t. outputs; mandatory in this case
-        grad_outputs = torch.ones(B).cuda()
-        # torch.autograd.grad default returns volatile
-        grad = torchgrad(U(z), z, grad_outputs=grad_outputs)[0]
-        # clip by norm
+        z = z.clone().requires_grad_(True)
+        grad, = torch.autograd.grad(U(z).sum(), z)
         max_ = B * model.latent_dim * 100.
         grad = torch.clamp(grad, -max_, max_)
-        grad.requires_grad_()
         return grad
 
       def normalized_kinetic(v):
-        zeros = torch.zeros(B, model.latent_dim).cuda()
+        zeros = torch.zeros(size=(B, model.latent_dim), device=device)
         return -utils.log_normal(v, zeros, zeros)
 
       z, v = hmc.hmc_trajectory(current_z, current_v, U, grad_U, epsilon)
       current_z, epsilon, accept_hist = hmc.accept_reject(
-          current_z, current_v,
-          z, v,
-          epsilon,
-          accept_hist, j,
-          U, K=normalized_kinetic)
+        current_z, current_v,
+        z, v,
+        epsilon,
+        accept_hist, j,
+        U, K=normalized_kinetic
+      )
 
     logw = utils.log_mean_exp(logw.view(n_sample, -1).transpose(0, 1))
     if not forward:
