@@ -35,8 +35,7 @@ class VAE(nn.Module):
         net = self.act_fn(self.fc1(net))
         net = self.act_fn(self.fc2(net))
         net = self.fc3(net)
-
-        return net[:, :zs], net[:, zs:]
+        return torch.chunk(net, chunks=2, dim=1)
 
     def decode(self, net):
         net = self.act_fn(self.fc4(net))
