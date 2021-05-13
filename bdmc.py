@@ -75,7 +75,8 @@ def main():
     loader = simulate.simulate_data(
         model,
         batch_size=args.batch_size,
-        n_batch=args.n_batch
+        n_batch=args.n_batch,
+        device=device
     )
 
     # run bdmc
