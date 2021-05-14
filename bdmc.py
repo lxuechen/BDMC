@@ -84,10 +84,11 @@ def main():
     # Note: a linear schedule is used here for demo; a sigmoidal schedule might
     # be advantageous in certain settings, see Section 6 in the original paper
     # for more https://arxiv.org/pdf/1511.02543.pdf
+    forward_schedule = torch.linspace(0, 1, args.chain_length, device=device)
     bdmc(
         model,
         loader,
-        forward_schedule=torch.linspace(0, 1, args.chain_length, device=device),
+        forward_schedule=forward_schedule,
         n_sample=args.iwae_samples,
     )
 

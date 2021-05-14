@@ -89,7 +89,7 @@ def ais_trajectory(
 
             # resample velocity
             current_v = torch.randn_like(current_z)
-            z, v = hmc.hmc_trajectory(current_z, current_v, U, grad_U, epsilon)
+            z, v = hmc.hmc_trajectory(current_z, current_v, grad_U, epsilon)
             current_z, epsilon, accept_hist = hmc.accept_reject(
                 current_z, current_v,
                 z, v,
@@ -102,6 +102,6 @@ def ais_trajectory(
         if not forward:
             logw = -logw
         logws.append(logw)
-        print('Last batch stats %.4f' % (logw.mean().cpu().data.numpy()))
+        print('Last batch stats %.4f' % (logw.mean().cpu().item()))
 
     return logws

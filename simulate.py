@@ -27,7 +27,7 @@ def simulate_data(model, batch_size=10, n_batch=1, device=None):
         if isinstance(x_logits, tuple):
             x_logits = x_logits[0]
         x_bernoulli_dist = Bernoulli(probs=x_logits.sigmoid())
-        x = x_bernoulli_dist.sample().data
+        x = x_bernoulli_dist.sample()
 
         paired_batch = (x, z)
         batches.append(paired_batch)
