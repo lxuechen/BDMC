@@ -44,7 +44,7 @@ def ais_trajectory(
             f_i = p(z)^(1-t) p(x,z)^(t) = p(z) p(x|z)^t
         =>  log f_i = log p(z) + t * log p(x|z)
         """
-        zeros = torch.zeros(size=(B, model.latent_dim), device=device)
+        zeros = torch.zeros_like(z)
         log_prior = utils.log_normal(z, zeros, zeros)
         log_likelihood = log_likelihood_fn(model.decode(z), data)
 
@@ -84,7 +84,7 @@ def ais_trajectory(
                 return grad
 
             def normalized_kinetic(v):
-                zeros = torch.zeros(size=(B, model.latent_dim), device=device)
+                zeros = torch.zeros_like(v)
                 return -utils.log_normal(v, zeros, zeros)
 
             # resample velocity
