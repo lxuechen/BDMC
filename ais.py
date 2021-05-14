@@ -1,4 +1,7 @@
-import numpy as np
+from typing import List
+from typing import Optional
+from typing import Union
+
 import torch
 from tqdm import tqdm
 
@@ -10,10 +13,11 @@ import utils
 def ais_trajectory(
     model,
     loader,
-    forward=True,
-    schedule=np.linspace(0., 1., 500),
-    n_sample=100,
-    device=None,
+    forward: bool,
+    schedule: Union[torch.Tensor, List],
+    n_sample: Optional[int] = 100,
+    initial_step_size: Optional[int] = 0.01,
+    device: Optional[torch.device] = None,
 ):
     """Compute annealed importance sampling trajectories for a batch of data.
 
@@ -23,13 +27,15 @@ def ais_trajectory(
       model (vae.VAE): VAE model
       loader (iterator): iterator that returns pairs, with first component
         being `x`, second would be `z` or label (will not be used)
-      forward (boolean): indicate forward/backward chain
-      schedule (list or 1D np.ndarray): temperature schedule, i.e. `p(z)p(x|z)^t`
-      n_sample (int): number of importance samples
-      device (torch.device): device to run all computation on
+      forward: indicate forward/backward chain
+      schedule: temperature schedule, i.e. `p(z)p(x|z)^t`
+      n_sample: number of importance samples
+      device: device to run all computation on
+      initial_step_size: initial step size for leap-frog integration;
+        the actual step size is adapted online based on accept-reject ratios
 
     Returns:
-        A list where each element is a torch.autograd.Variable that contains the
+        a list where each element is a torch.Tensor that contains the
         log importance weights for a single batch of data
     """
 
@@ -50,7 +56,7 @@ def ais_trajectory(
         batch = batch.to(device)
         batch = utils.safe_repeat(batch, n_sample)
 
-        epsilon = torch.ones(size=(B,), device=device).mul_(0.01)
+        epsilon = torch.full(size=(B,), device=device, fill_value=initial_step_size)
         accept_hist = torch.zeros(size=(B,), device=device)
         logw = torch.zeros(size=(B,), device=device)
 
@@ -95,7 +101,7 @@ def ais_trajectory(
         logw = utils.log_mean_exp(logw.view(n_sample, -1).transpose(0, 1))
         if not forward:
             logw = -logw
-        logws.append(logw.data)
+        logws.append(logw)
         print('Last batch stats %.4f' % (logw.mean().cpu().data.numpy()))
 
     return logws

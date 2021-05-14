@@ -24,16 +24,16 @@ def bdmc(model, loader, forward_schedule, n_sample):
       n_sample (int): number of importance samples
 
     Returns:
-        Two lists for forward and backward bounds on batchs of data
+        two lists for forward and backward bounds on batches of data
     """
 
     # iterator is exhaustible in py3, so need duplicate
-    load, load_ = itertools.tee(loader, 2)
+    loader_forward, loader_backward = itertools.tee(loader, 2)
 
     # forward chain
     forward_logws = ais.ais_trajectory(
         model,
-        load,
+        loader_forward,
         forward=True,
         schedule=forward_schedule,
         n_sample=n_sample,
@@ -41,10 +41,10 @@ def bdmc(model, loader, forward_schedule, n_sample):
     )
 
     # backward chain
-    backward_schedule = np.flip(forward_schedule, axis=0)
+    backward_schedule = torch.flip(forward_schedule, dims=(0,)).contiguous()
     backward_logws = ais.ais_trajectory(
         model,
-        load_,
+        loader_backward,
         forward=False,
         schedule=backward_schedule,
         n_sample=n_sample,
@@ -58,11 +58,12 @@ def bdmc(model, loader, forward_schedule, n_sample):
         lower_bounds.append(forward.mean().detach().item())
         upper_bounds.append(backward.mean().detach().item())
 
-    upper_bounds = np.mean(upper_bounds)
-    lower_bounds = np.mean(lower_bounds)
+    upper_bounds = float(np.mean(upper_bounds))
+    lower_bounds = float(np.mean(lower_bounds))
 
-    print('Average bounds on simulated data: lower %.4f, upper %.4f' %
-          (lower_bounds, upper_bounds))
+    print(
+        f"Average bounds on simulated data: lower {lower_bounds:.4f}, upper {upper_bounds:.4f}"
+    )
 
     return forward_logws, backward_logws
 
@@ -80,10 +81,13 @@ def main():
     )
 
     # run bdmc
+    # Note: a linear schedule is used here for demo; a sigmoidal schedule might
+    # be advantageous in certain settings, see Section 6 in the original paper
+    # for more https://arxiv.org/pdf/1511.02543.pdf
     bdmc(
         model,
         loader,
-        forward_schedule=np.linspace(0., 1., args.chain_length),
+        forward_schedule=torch.linspace(0, 1, args.chain_length, device=device),
         n_sample=args.iwae_samples,
     )
 
