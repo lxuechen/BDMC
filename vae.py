@@ -52,7 +52,7 @@ class VAE(nn.Module):
         elbo = logpx + logpz - warmup_const * logqz
 
         # need correction for Tensor.repeat
-        elbo = utils.log_mean_exp(elbo.view(k, -1).transpose(0, 1))
+        elbo = utils.logmeanexp(elbo.view(k, -1).transpose(0, 1))
         elbo = torch.mean(elbo)
 
         logpx = torch.mean(logpx)

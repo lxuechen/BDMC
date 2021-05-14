@@ -91,14 +91,18 @@ def ais_trajectory(
             current_v = torch.randn_like(current_z)
             z, v = hmc.hmc_trajectory(current_z, current_v, grad_U, epsilon)
             current_z, epsilon, accept_hist = hmc.accept_reject(
-                current_z, current_v,
-                z, v,
+                current_z,
+                current_v,
+                z,
+                v,
                 epsilon,
-                accept_hist, j,
-                U, K=normalized_kinetic,
+                accept_hist,
+                j,
+                U=U,
+                K=normalized_kinetic,
             )
 
-        logw = utils.log_mean_exp(logw.view(n_sample, -1).transpose(0, 1))
+        logw = utils.logmeanexp(logw.view(n_sample, -1).transpose(0, 1))
         if not forward:
             logw = -logw
         logws.append(logw)
