@@ -37,17 +37,6 @@ python bdmc.py \
 
 will start the forward and backwards chain of BDMC based on the model loaded from the pretrained checkpoint.
 
-## Implementation Details
-
-To avoid OOM when using extravagantly long AIS chains, strategically using `tensor.requires_grad_()` is required. An
-equivalent TensorFlow graph-mode implementation ideally would require using `tf.while_loop` or abstracting only part of
-the graph (calling `session.run` multiple times during a chain).
-
-## Others
-
-Since BDMC relies on AIS, and AIS (potentially) relies on Hamiltonian Monte Carlo (HMC) [3], the repo also contains such
-relevant code.
-
 ## References
 
 [1] Grosse, Roger B., Zoubin Ghahramani, and Ryan P. Adams. "Sandwiching the marginal likelihood using bidirectional
